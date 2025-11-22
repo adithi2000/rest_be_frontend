@@ -1,0 +1,56 @@
+Line,Code Snippet,Concept,What is Used and Why
+1,"import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';",Imports,"Imports the Axios library and its TypeScript type definitions. This is crucial for type safety, so VS Code knows what methods are available and what data they return (e.g., that error is an AxiosError)."
+2,const BASE_URL = 'http://localhost:8080';,Constant,Defines a single variable for the root address of your Spring Boot backend.
+3,const http: AxiosInstance = axios.create({...});,Axios Instance,"Creates a custom instance of the Axios tool, named http. The type : AxiosInstance is TypeScript telling you this variable will be an Axios object. It sets the base URL and standard headers for all requests using this instance."
+
+Line,Code Snippet,Concept,What is Used and Why
+4,http.interceptors.request.use(...),Interceptor Setup,"Tells the http instance: ""Use the following function to inspect and modify the request before it leaves the browser."""
+Arrow Fn,(config) => { ... },Arrow Function / Parameter,"This is a modern JavaScript function syntax. The parameter config is automatically provided by Axios. It represents the request details (URL, headers, body) about to be sent."
+5,const token = localStorage.getItem('jwtToken');,JWT Retrieval,Reads the JWT string that was saved after the successful Google login.
+6,if (token && config.url && !config.url.includes('/oauth2')),Conditional Security,CRUCIAL: Checks three things: 1) Is there a token? 2) Is the API call NOT part of the internal /oauth2 process? We exclude /oauth2 to prevent sending an expired JWT back to Google itself.
+7,config.headers.Authorization = \Bearer ${token}`;`,JWT Injection,"The Security Step. If the checks pass, this line adds the required Authorization: Bearer [token] header. This is the exact format your Spring Boot JwtAuthenticationFilter looks for."
+8,return config;,Continuation,"Returns the (modified) configuration object back to Axios, allowing the request to proceed to your Spring Boot server."
+
+Line,Code Snippet,Concept,What is Used and Why
+9,http.interceptors.response.use(...),Interceptor Setup,"Tells the http instance: ""Use the following function to inspect the response after it returns."""
+10,"(response) => response,",Success Handler,The first function in use() handles successful responses (200 OK). We just return the response data to the component that called it.
+Arrow Fn,(error: AxiosError) => { ... },Error Handler,The second function handles errors (4xx or 5xx status codes). The parameter error is automatically provided by Axios and typed as an AxiosError.
+11,if (error.response && error.response.status === 401),401 Check,"Checks if the error was due to a 401 Unauthorized status code. This means the JWT you sent was either missing, invalid, or expired."
+12,localStorage.removeItem('jwtToken'); window.location.href = '/';,Forced Logout,"CRITICAL SECURITY STEP. If the token is rejected (401), we assume it's bad. We immediately clear the faulty token and force the browser to reload the page at the root path (/), which sends the user back to the Login component."
+13,export default http;,Module Export,"Makes the fully configured, secure http Axios instance available for use in your container components using import http from '...'."
+
+The config parameter is provided by Axios inside the request interceptor (http.interceptors.request.use).SourceRoleWhat It ContainsAxios (Library)Input ParameterThe config object is a JavaScript object that holds all the details of the API request before it is sent to the Spring Boot server.Why it's used:ModificationYou need this object because your custom code has to modify it. Specifically, you use the config object to add the JWT: config.headers.Authorization = 'Bearer ...'.Where it comes from:Axios AutomationWhen you call http.get('/history') in your container component, Axios first creates the configuration object based on your call (URL, Method, etc.) and then passes that object to your interceptor function.
+
+Parameter,Role,What It Contains
+response,Success Input,"An object containing the full data received from the Spring Boot server when the request was successful (HTTP status 200). It holds the status code, headers, and the final JSON data (response.data)."
+error,Failure Input,An object containing the details when the Spring Boot server returns an HTTP error status (like 401 Unauthorized or 404 Not Found). This is typed as AxiosError.
+Where they come from:,Axios Automation,"Once Axios completes its connection to the server, it takes the raw data packet and formats it into either the response object (if successful) or the error object (if failed), and then passes the appropriate object to your interceptor function."
+
+Function,Return Type,What it Does,Why it's Good Practice
+getFacultyProfile,Promise<FacultyProfileDto>,Sends a GET request to the profile endpoint. The interceptor automatically adds the JWT. Returns the clean profile object.,The container component gets structured data and doesn't worry about the network details.
+getSalaryHistory,Promise<SalaryHistoryDto[]>,Sends a GET request to the history endpoint. Returns the clean array of salary objects.,"All type checking is done here, ensuring the container receives reliable data."
+downloadPayslip,void,Constructs the secure download URL and uses window.open() to initiate the download.,Isolates the file-handling logic and the necessary token insertion into the query string (required for downloads).
+
+Concept,Low-Level Axios (In Interceptor),High-Level Utility (In Container)
+Request Object,Exposed as config.,Hidden. The container just calls getSalaryHistory().
+Response Object,Exposed as response.,Hidden. The utility returns only response.data.
+Error Handling,Exposed as error (AxiosError).,"Hidden. The utility intercepts the 401 error, and the container only sees the failure in the try...catch block."
+
+Code,Role of Request/Response
+const response = await http.get<SalaryHistoryDto[]>('/api/faculty/salary/history');,The Request object is implicitly created by http.get(). The Response object (response) is returned by the server.
+return response.data;,"Abstraction: The function only returns the data property from the full response object, which is the array of SalaryHistoryDto objects. All other mechanics (status code, headers, config) are thrown away."
+
+Syntax Breakdown
+Syntax Feature
+Description
+Code Snippet
+export const	Declares a constant that can be imported and used in other files (part of ES Modules).	export const getSalaryHistory
+getSalaryHistory =	The name of the constant assigned to the function definition.	getSalaryHistory
+async () => { ... }	Defines an asynchronous arrow function, which allows the use of the await keyword inside its body.	async () => { ... }
+: Promise<...>	The TypeScript type annotation specifying that the function returns a Promise that resolves to a specific data structure (SalaryHistoryDto[]).	: Promise<SalaryHistoryDto[]>
+await	Pauses the execution of the async function until the Promise returned by http.get() settles (resolves or rejects).	await http.get(...)
+http.get<...>(...)	Calls the get method on a pre-configured Axios instance named http.	http.get<SalaryHistoryDto[]>(...)
+<SalaryHistoryDto[]>	A TypeScript generic that explicitly tells Axios (and the compiler) what type of data is expected in the response data (response.data).	http.get<SalaryHistoryDto[]>
+'...'	The API endpoint URL path being requested.	'/api/faculty/salary/history'
+response.data	Accesses the automatically parsed JSON data payload from the successful HTTP response object returned by Axios.	return response.data;
+

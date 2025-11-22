@@ -1,0 +1,11 @@
+We will have Faculty model and salary model
+model is a typescript class that represents the record in your table
+.ts file (simple)
+Generics
+
+Routes : map a component to a url 
+components will get rendered when you go to a url
+
+
+// Remenber in Typescrip, interface is a way of declaring or structure 
+a powerful syntactical contract that defines the shape of an object by specifying its properties and method signatures

@@ -1,0 +1,233 @@
+// Context is what you want to maintain 
+//Auth Context
+Context is crucial for managing the user's login state globally, which you'll need for displaying profile info and checking authentication status across all pages.
+
+1. 🌐 What is Context?
+Context is a built-in React feature that provides a way to pass data through the component tree without having to manually pass props down at every level.
+
+Analogy: A Global Bulletin Board. Instead of passing a piece of paper (a prop) from the front desk down to every office, you post the information (the context) on a central board. Any component, no matter where it is, can look up and read the data from that board.
+
+Key Benefit: It solves "prop drilling"—the problem of passing data through components that don't actually need the data themselves.
+
+State to Manage,Without Context,With Context
+Logged-in Status,Every protected component needs to check localStorage for the token.,Single source of truth: The Context Provider checks the token once and tells the whole app if the user is isAuthenticated.
+User Data,"You'd have to fetch the faculty profile (name, email, designation) in the SalaryHistory component and pass it everywhere.","Global Profile: The Context stores the profile immediately after login, making the name or email instantly available to the Header or a Profile panel."
+
+1. Know the basics:
+--> useState: for local component data holding(variable can also do , but it never gets displayed)
+---> useContext: this is present to avail a Global context : like user data, login info , token handling etc
+--> useEffect(function,dependency)-> rerendering a component based on any fucntion : api call , time etc:
+Comopnent mount: 
+first time rendering a component on a page is called component mounting
+
+
+That's the final piece of the security puzzle for the frontend! Setting up AuthContext is essential for securely managing the logged-in user's state and profile data globally.
+
+We will create the TypeScript interfaces first, then the Context file, explaining the purpose of every line and React concept used.
+
+1. 📝 TypeScript Models (src/models/Auth.ts)
+Before creating the context, we must define the exact shapes of the data that the context will hold and provide.
+
+File: src/models/Auth.ts
+TypeScript
+
+// src/models/Auth.ts
+
+import { FacultyProfileDto } from './Salary'; // Assuming FacultyProfileDto is defined here or imported
+
+// 1. Interface for the entire Auth state (the data we want to store globally)
+export interface AuthState {
+  isAuthenticated: boolean; // Tracks if a valid user is logged in
+  profile: FacultyProfileDto | null; // Stores the user's details (or null if not logged in)
+  loading: boolean; // Tracks if we are currently checking local storage for a token
+}
+
+// 2. Interface for the Context's methods (the actions a component can perform)
+export interface AuthContextType extends AuthState {
+  login: (token: string) => void;     // Function to run after successful login
+  logout: () => void;                 // Function to clear all auth data and log out
+  fetchProfile: () => Promise<void>;  // Function to fetch the user's data from Spring Boot
+}
+Line/Concept	What is Used?	Purpose and Explanation
+interface AuthState	TypeScript Interface	Defines the structure of the data held in our global memory (Context). It ensures we never accidentally call the user's name when they aren't logged in.
+isAuthenticated: boolean;	State Field	A simple flag (true or false) used by components to decide whether to show the "Login" button or the "Logout" button.
+profile: FacultyProfileDto | null;	Union Type	The vertical bar (`
+interface AuthContextType extends AuthState	Interface Extension	This new interface inherits all the fields from AuthState and adds the functions (methods) that will be provided globally (like login and logout).
+
+2. 🔑 The Context Provider (src/context/AuthContext.tsx)
+This is the main file that holds the global memory, manages the JWT in local storage, and provides the data/methods to the rest of the application.
+
+File: src/context/AuthContext.tsx
+TypeScript
+
+// src/context/AuthContext.tsx
+
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { AuthState, AuthContextType } from '../models/Auth'; // 1
+import { FacultyProfileDto } from '../models/Salary';
+import { getFacultyProfile } from '../utils/http'; // 2
+
+// 3. Create the Context (The empty bulletin board)
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// 4. Define the initial state (The default notes on the board)
+const initialAuthState: AuthState = {
+  isAuthenticated: false,
+  profile: null,
+  loading: true, 
+};
+
+// 5. The Provider Component
+export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  
+  // 6. State: The actual global memory stored using the useState hook
+  const [authState, setAuthState] = useState<AuthState>(initialAuthState);
+
+  // --- 7. Functions/Methods (The Global Actions) ---
+
+  // Function to fetch the user's profile and save it to state
+  const fetchProfile = useCallback(async () => {
+    try {
+      const profileData = await getFacultyProfile(); // Call the secured API utility
+      setAuthState(prev => ({
+        ...prev,
+        profile: profileData,
+        isAuthenticated: true,
+        loading: false,
+      }));
+    } catch (error) {
+      // If profile fetch fails (token rejected), force logout
+      logout();
+    }
+  }, []);
+
+  // Function to run immediately after the JWT is captured (in RedirectHandler)
+  const login = (token: string) => {
+    localStorage.setItem('jwtToken', token);
+    fetchProfile(); // Immediately fetch the user's profile
+  };
+
+  // Function to clear session data
+  const logout = () => {
+    localStorage.removeItem('jwtToken');
+    setAuthState(initialAuthState); // Reset state to logged-out
+    window.location.href = '/'; // Force redirect to home page
+  };
+
+  // 8. useEffect: Check local storage on initial app load
+  useEffect(() => {
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
+        // If token exists, try to fetch the profile to confirm it's still valid
+        setAuthState(prev => ({ ...prev, loading: true }));
+        fetchProfile();
+    } else {
+        // No token, finish loading immediately
+        setAuthState(prev => ({ ...prev, loading: false }));
+    }
+  }, [fetchProfile]); // Runs once when the application mounts
+
+  // 9. The final object passed to all consuming components
+  const contextValue: AuthContextType = {
+    ...authState, // includes isAuthenticated, profile, loading
+    login,
+    logout,
+    fetchProfile,
+  };
+
+  return (
+    // 10. The Provider provides the data (contextValue) to all child components
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// 11. Custom Hook for easy consumption (useAuth())
+export const useAuth = () => {
+  const context = React.useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthContextProvider');
+  }
+  return context;
+};
+🧐 Line-by-Line Explanation
+Line	Code Snippet	React/TS Concept	Purpose and Explanation
+1	import { AuthState, ... } from '../models/Auth';	Interface Import	Imports the required data shapes we defined earlier, enabling type checking for all state variables.
+2	import { getFacultyProfile } from '../utils/http';	Utility Import	Imports the secured function that communicates with the Spring Boot backend.
+3	const AuthContext = createContext<...>(undefined);	createContext	Creates the actual Context object (the Bulletin Board). We specify the type (AuthContextType) so TypeScript knows what data will be available to consumers.
+5	export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => { ... }	The Provider Component	This standard component structure accepts a special children prop, which represents all the components wrapped by the provider.
+6	const [authState, setAuthState] = useState<AuthState>(initialAuthState);	State Storage	Uses useState to store the global authentication data. The generic <AuthState> forces the state to match the defined interface.
+7	const fetchProfile = useCallback(async () => { ... }, []);	useCallback Hook	Memorizes the fetchProfile function. This prevents the function from being unnecessarily recreated every time the provider re-renders, which is good for performance.
+8	useEffect(() => { ... }, [fetchProfile]);	useEffect Hook	Initial Check. This hook runs when the application loads. It checks localStorage for an existing JWT. If found, it calls fetchProfile() to validate the token with the Spring Boot server.
+10	<AuthContext.Provider value={contextValue}>	Provider Output	This is the component's output. It wraps all child components ({children}) and makes the contextValue (the state + the methods) available to the entire tree below it.
+11	export const useAuth = () => { ... }	Custom Hook	This is the standard, clean way for components to consume the context. Instead of calling React.useContext(AuthContext), components will simply call const { profile, logout } = useAuth();.
+
+✅ 1. It creates a React Context
+
+createContext() is used to create a global store.
+
+✅ 2. It tells TypeScript what type the context value should have
+
+<AuthContextType | undefined> is a TypeScript generic.
+
+It means:
+
+“This context will contain value of type AuthContextType,
+or in some cases it might be undefined.”
+
+So the context can either have:
+
+the authentication data (AuthContextType)
+
+or nothing yet (undefined)
+
+This is useful while loading or before Provider supplies its value.
+
+Great — this line is super important in React state management, and I’ll explain it in simple, beginner-friendly English.
+
+Here is the code:
+
+setAuthState(prev => ({
+  ...prev,
+  profile: profileData,
+  isAuthenticated: true,
+  loading: false,
+}));
+
+
+Let’s break it into 4 simple concepts:
+
+✅ 1. setAuthState
+
+This is the state update function from useState.
+
+Example:
+
+const [authState, setAuthState] = useState({...});
+
+
+So setAuthState() changes the authState.
+
+✅ 2. prev => ( ... )
+
+This is an updater function.
+
+Instead of doing:
+
+setAuthState(newState)
+
+
+we do:
+
+setAuthState(prev => newState)
+
+
+Why?
+
+➡️ Because React gives us the previous state safely.
+
+prev = previous authState value.
+
+This is required when updating part of an object.
+

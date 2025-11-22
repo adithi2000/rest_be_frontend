@@ -1,0 +1,75 @@
+// get data and give data to presentation
+React.FC is a TypeScript type used to explicitly define a Functional Component in a React application.
+
+Here's a short explanation:
+
+React.FC stands for React Functional Component.
+
+Purpose: When you use it to type your function, like this:
+
+That's a common misconception! They are not equivalent in the way they are defined, but they achieve the same result in creating a React component.
+
+Here's the breakdown:
+
+💡 Function Component Declaration
+When you write a function component in React, you typically define it in one of two ways:
+
+1. Standard Function Declaration (or Arrow Function)
+This is the standard, simpler, and recommended way since modern React (post-TypeScript 2.9, generally):
+
+JavaScript
+
+// Standard function declaration
+function Welcome(props) {
+  return <h1>Hello, {props.name}</h1>;
+}
+
+// OR Arrow function (most common)
+const Welcome = (props) => {
+  return <h1>Hello, {props.name}</h1>;
+};
+When you use this component in JSX, it's: <Welcome name="Sara" />.
+
+2. Using React.FC (Function Component)
+This is a TypeScript-specific construct. You use it as a type annotation for your arrow function:
+
+JavaScript
+
+import React from 'react';
+
+const Welcome: React.FC<{ name: string }> = (props) => {
+  return <h1>Hello, {props.name}</h1>;
+};
+
+This code snippet is a common pattern used in React functional components to display a loading indicator while waiting for data to be fetched or processed.
+
+Here is a breakdown of what it means:
+
+🔍 Code Breakdown
+The snippet uses a simple conditional return statement:
+
+1. The Condition: if (loading)
+loading: This is a boolean state variable (usually set using the useState hook in React, e.g., const [loading, setLoading] = useState(true);).
+
+When React renders this component, it first checks the value of loading.
+
+If loading is true (meaning data is currently being fetched), the code inside the if block executes.
+
+If loading is false (meaning the data has finished loading or an error occurred), the component skips the if block and proceeds to render the rest of the component's JSX (usually the actual data content).
+
+2. The Return Statement
+JavaScript
+
+return <Container className="text-center mt-5"><Spinner animation="border" variant="primary" /></Container>;
+return ...: In a React component, when you hit a return statement, the component stops execution immediately and renders the JSX you returned.
+
+<Container>: This is likely a component from a UI library like React-Bootstrap or similar, used to provide basic styling (like centering and margins).
+
+className="text-center mt-5": Bootstrap classes for centering text and adding a margin-top.
+
+<Spinner>: This is another component from the UI library (like React-Bootstrap) that displays a visual loading animation (a spinning circle, bouncing dots, etc.).
+
+animation="border": Specifies the type of spinner animation.
+
+variant="primary": Sets the color of the spinner (usually blue).
+

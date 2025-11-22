@@ -1,0 +1,2 @@
+This component is the page that Spring Boot redirects the user to. Its only job is to execute the secure login command and get the user out of the address bar.
+

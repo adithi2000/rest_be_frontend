@@ -1,0 +1,68 @@
+TypeScript is a superset of JavaScript that adds static typing and other object-oriented features like interfaces, classes, and decorators. This allows developers to catch errors earlier during development (compile time) rather than when the code is running (runtime).
+Basics of TypeScript
+TypeScript code is written in .ts files and must be compiled into standard JavaScript (.js files) using the TypeScript compiler (tsc) before it can be executed by a browser or Node.js runtime.
+Key Features:
+Type Annotations: Explicitly defining the type of a variable, function parameter, or return value using a colon (:).
+Compilation: The process of converting TypeScript code into JavaScript code using the compiler.
+Tooling Support: Excellent support in modern IDEs (like VS Code) for auto-completion, intelligent refactoring, and real-time error checking.
+Variables in TypeScript
+Variables are used to store data. TypeScript adds the ability to assign a specific type to a variable, ensuring the data stored is always of that kind.
+Declaring Variables
+You use let and const (same as modern JavaScript) to declare variables:
+typescript
+let username: string = "Alice";
+const api_url: string = "https://api.example.com";
+Use code with caution.
+
+Basic Data Types
+TypeScript includes all JavaScript primitive types and adds useful others:
+Type
+Description
+Example
+number	Floating point values (integers are also numbers).	let age: number = 25;
+string	Textual data.	let name: string = "Bob";
+boolean	True or false values.	let isActive: boolean = true;
+any	A type that can hold any kind of value (use sparingly).	let data: any = 10; data = "new value";
+array	An ordered list of values of a specific type.	let numbers: number[] = [1, 2, 3];
+Methods (Functions) in TypeScript
+Functions in TypeScript work much like JavaScript functions, but you can explicitly define the types of parameters and the type of the value the function returns. In an object-oriented context, a function defined within a class is called a method.
+Defining Functions/Methods
+Type annotations make function signatures clear and robust:
+typescript
+// Define parameter types (number, number) and return type (number)
+function add(a: number, b: number): number {
+    return a + b;
+}
+
+const result = add(5, 10); // Result is inferred as a number
+Use code with caution.
+
+Optional and Default Parameters
+You can make parameters optional using a question mark (?) or assign default values:
+typescript
+// 'greeting' has a default value
+function greet(name: string, greeting: string = "Hello"): string {
+    return `${greeting}, ${name}!`;
+}
+
+// 'age' is optional
+function introduce(name: string, age?: number): string {
+    if (age !== undefined) {
+        return `My name is ${name} and I am ${age} years old.`;
+    }
+    return `My name is ${name}.`;
+}
+Use code with caution.
+
+Arrow Functions (Lambda Functions)
+Modern syntax for defining functions, also fully type-safe:
+typescript
+const multiply = (x: number, y: number): number => {
+    return x * y;
+};
+Use code with caution.
+
+You can learn more by exploring the official TypeScript documentation.
+
+Axios is a popular, promise-based JavaScript library used to make asynchronous HTTP requests from web browsers and Node.js environments. 
+
