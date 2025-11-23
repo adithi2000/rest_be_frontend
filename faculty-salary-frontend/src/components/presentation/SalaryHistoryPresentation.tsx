@@ -76,6 +76,7 @@ const SalaryHistoryPresentation: React.FC<SalaryHistoryProps> = ({ history, prof
                    <img src={profile?.profilePictureUrl} alt="Profile" className="rounded-circle me-3" style={{ width: '50px', height: '50px','float': 'left' }} />
                    </div>
                   <em><strong >Faculty Name: </strong></em>  {facultyName} <br/>
+                   <em><strong >Internal ID: </strong></em>  {profile?.internal_id} <br/>
                   <em><strong >My Designation: </strong></em>  {designation} <br/>
                   <em><strong >Department:  </strong></em>  {designation.includes('Professor') ? (<>Belongs to both DSAI and CS<br/></>) : (<>Belongs to both CS<br/></>)}
                   <em><strong >Institute </strong></em>:  IIIT Bangalore <br/>

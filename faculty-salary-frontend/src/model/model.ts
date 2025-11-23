@@ -16,4 +16,5 @@ export interface FacultyProfileDto {
   role: string;
   designation: string; // Added the new designation field
   profilePictureUrl?: string; // The '?' makes this field optional/nullable
+  internal_id:string;
 }
