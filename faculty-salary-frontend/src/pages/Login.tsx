@@ -24,8 +24,8 @@ const Login: React.FC = () => {
        
     return (
         // Centers the login card both horizontally and vertically (vh-100)
-        <Container className="d-flex justify-content-center align-items-center vh-100 bg-light ">
-          <Card className="p-5 shadow-lg text-center" style={{ maxWidth: '450px', width: '90%' }}>
+        <Container className="d-flex justify-content-center align-items-center vh-100 body">
+          <Card className="p-5 shadow-lg text-center" style={{ maxWidth: '450px', width: '90%', backgroundColor: 'white' }}>
             <Card.Title as="h2" className="mb-4 text-primary fw-bold">
               🎓 Faculty Portal Access
             </Card.Title>
