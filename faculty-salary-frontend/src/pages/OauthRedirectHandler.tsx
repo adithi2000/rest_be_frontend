@@ -14,29 +14,46 @@ The Presentation (SalaryHistoryPresentation.tsx): Renders the final UI. */
 const OauthRedirectHandler: React.FC = () => {
   const navigate = useNavigate(); // 1. useNavigate to redirect after login
   const location = useLocation(); // 2. useLocation to access query params
-  const { login } = useAuth(); // 2. Use the custom hook to get the login function
+  const { login,logout_error } = useAuth(); // 2. Use the custom hook to get the login function
 
   // useEffect runs the logic once when the component is loaded
   useEffect(() => {
-    // Get the URL parameters (query string)
-    const params = new URLSearchParams(location.search);
-    const token = params.get('token'); // Look for the JWT string
+    const handleAuth = async () => {
+      // Get the URL parameters (query string)
+      const params = new URLSearchParams(location.search);
+      const auth_success = params.get('auth_status'); // Look for the auth_success flag
+      const auth_error = params.get('error'); // Look for the auth_error flag
+      //const token = params.get('token'); // Look for the JWT string
 
-    if (token) {
-      //  Success: Call the global login function
-      login(token); 
-      
-      //  Navigate to the history page (App will be running, but this starts data load)
-      // The fetchProfile inside login() will update the global state.
-      navigate('/salary-history', { replace: true });
-      
-    } else {
-      // 6. Failure: Handle error if token is missing
-      console.error('Authentication Error: No token received.');
-      navigate('/', { replace: true }); 
-    }
+      if (auth_error && !auth_success) {
+        // 4. Handle authentication error
+        console.error('Authentication Error:', auth_error);
+        logout_error();
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        //alert(`Authentication Failed: ${auth_error}`);
+        //navigate('/login', { replace: true,state: { error: auth_error } });
+        navigate(`/login?error=${encodeURIComponent(auth_error)}`, { replace: true });
+        
+      return;
+      }
+
+      if (auth_success && !auth_error) {
+        login(); // Call the global login function to update context
+        navigate('/salary-history', { replace: true });
+        return;
+      }
+
+       // 3. FALLBACK
+    console.error('Authentication Flow Failed: No status received from the backend.');
+     //window.alert(`Authentication Failed: Internal Error occurred during login.`);
+    //navigate('/login', { replace: true,state: { error: "Internal Error occurred during login." } });
+     navigate(`/login?error=500Internal`, { replace: true });
+     
+    };
+
+    handleAuth();
   }, [location.search, navigate, login]);
-return (
+  return (
     <div className="text-center my-5">
       {/* Bootstrap Spinner */}
       <div className="spinner-border text-primary" role="status">

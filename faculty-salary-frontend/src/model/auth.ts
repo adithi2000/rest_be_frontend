@@ -9,8 +9,9 @@ export interface AuthState{
 
 // 2. Interface for the Context's methods (the actions a component can perform)
 export interface AuthContextType extends AuthState{
-    login:(token:string)=>void;
+    login:(token?:string)=>void;
     logout:()=>void;
     fetchProfile:()=>Promise<void>;
+    logout_error:()=>void;
 
 }

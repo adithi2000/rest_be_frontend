@@ -7,7 +7,7 @@ import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { type AuthState, type AuthContextType } from '../model/auth'; // 1
 import { type FacultyProfileDto } from '../model/model';
-import { getFacultyProfile } from '../utils/httpUtils'; 
+import { getFacultyProfile,logoutProfile,hardResetBrowser } from '../utils/httpUtils'; 
 
 const AuthContext=createContext<AuthContextType | undefined>(undefined);
 const initialAuthState:AuthState={
@@ -21,15 +21,24 @@ export const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ c
    const navigate = useNavigate();
 const [authState,setAuthState]=useState<AuthState>(initialAuthState);
 // Function to run immediately after the JWT is captured (in RedirectHandler)
-  const login = (token: string) => {
-    localStorage.setItem('jwtToken', token);
+  const login = () => {
+    //localStorage.setItem('jwtToken', token);
     fetchProfile(); // Immediately fetch the user's profile
   };
 
   // Function to clear session data
- 
-const logout = useCallback(() => {
-  localStorage.removeItem('jwtToken');
+ const logout_error = useCallback(() => {
+    hardResetBrowser();
+  //localStorage.removeItem('jwtToken');
+  setAuthState(initialAuthState);
+  
+  navigate('/login', { replace: true });
+}, [navigate]);
+
+
+const logout = useCallback(async () => {
+  //localStorage.removeItem('jwtToken');
+    await logoutProfile();
   setAuthState(initialAuthState);
   navigate('/login', { replace: true });
 }, [navigate]);
@@ -70,6 +79,7 @@ useEffect(() => {
     login,
     logout,
     fetchProfile,
+    logout_error
   };
 
   return (
